@@ -140,7 +140,7 @@ PHASE_DELAYS = [
 
 st.set_page_config(page_title="SIFACT — Fake News Detector", page_icon="📰", layout="wide")
 
-st.title("📰 SIFACT — Fake News Detector")
+st.title("📰 SIFACT — Fake News Detector  v1.0")
 st.caption("Paste an article below. The backend runs extraction, verification, and synthesis.")
 
 backend_url = st.sidebar.text_input("Backend URL", value=DEFAULT_BACKEND, help="FastAPI base URL")
