@@ -69,7 +69,7 @@ def _run_pipeline(article: str) -> SIFACTState:
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok","version": "1.0"}
+    return {"status": "ok","version": "1.0.0"}
 
 
 @app.post("/api/analyze")
