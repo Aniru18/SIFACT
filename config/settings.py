@@ -37,3 +37,6 @@ NEWS_ARTICLES_PER_CLAIM  = int(os.getenv("NEWS_ARTICLES_PER_CLAIM", 5))
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+#uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
+#uv run streamlit run frontend/app.py

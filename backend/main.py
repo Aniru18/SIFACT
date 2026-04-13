@@ -22,20 +22,33 @@ app = FastAPI(
     version="0.1.0",
 )
 
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=[
+#         "http://127.0.0.1:8501",
+#         "http://localhost:8501",
+#         "http://127.0.0.1:3000",
+#         "http://localhost:3000",
+#     ],
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+# .........Update for vercel.......
+import os
+
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:8501"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:8501",
-        "http://localhost:8501",
-        "http://127.0.0.1:3000",
-        "http://localhost:3000",
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
 class AnalyzeRequest(BaseModel):
     article: str = Field(..., min_length=1, description="Raw news article text to analyze")
 

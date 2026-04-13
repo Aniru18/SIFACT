@@ -127,7 +127,8 @@ import threading
 import httpx
 import streamlit as st
 
-DEFAULT_BACKEND = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
+# DEFAULT_BACKEND = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
+DEFAULT_BACKEND = st.secrets.get("BACKEND_URL", os.environ.get("BACKEND_URL", "http://127.0.0.1:8000"))
 
 # Approximate phase durations (seconds) — tweak to match your backend's real timing
 PHASE_DELAYS = [
