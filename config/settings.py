@@ -14,6 +14,8 @@ GROQ_API_KEY1        = os.getenv("GROQ_API_KEY1", "")
 GROQ_API_KEY2        = os.getenv("GROQ_API_KEY2", "")
 GROQ_API_KEY3        = os.getenv("GROQ_API_KEY3", "")
 
+
+
 NEWS_API_KEY        = os.getenv("NEWS_API_KEY", "")
 GNEWS_API_KEY       = os.getenv("GNEWS_API_KEY", "")
 
@@ -47,3 +49,4 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 #uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 #uv run streamlit run frontend/app.py
+
