@@ -248,3 +248,67 @@ if run:
 
         with st.expander("Raw JSON response"):
             st.json(data)
+
+
+
+            
+
+# """
+# SIFACT Streamlit UI — calls the FastAPI backend.
+
+# 1. Start API (repo root):
+#    uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
+
+# 2. Start UI (repo root):
+#    streamlit run frontend/app.py
+
+# Optional env var: BACKEND_URL (default http://127.0.0.1:8000)
+# """
+
+# from __future__ import annotations
+# import os
+# import streamlit as st
+
+# from ui.styles import SIFACT_CSS
+# from ui.components import render_masthead, render_sidebar, section_label
+# from ui.pipeline import run_analysis
+# from ui.results import render_results
+
+# # ── Page config ────────────────────────────────────────────────────────────────
+# st.set_page_config(
+#     page_title="SIFACT — Fake News Detector",
+#     page_icon="📰",
+#     layout="wide",
+# )
+# st.markdown(SIFACT_CSS, unsafe_allow_html=True)
+
+# # ── Layout ─────────────────────────────────────────────────────────────────────
+# DEFAULT_BACKEND = st.secrets.get(
+#     "BACKEND_URL", os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
+# )
+
+# backend_url = render_sidebar(DEFAULT_BACKEND)
+# render_masthead()
+
+# # ── Input ──────────────────────────────────────────────────────────────────────
+# section_label("Article Input")
+# article = st.text_area(
+#     label="article_text",
+#     label_visibility="collapsed",
+#     height=280,
+#     placeholder="Paste the news article you want to fact-check…",
+# )
+
+# col1, col2 = st.columns([1, 5])
+# with col1:
+#     run = st.button("Analyze →", type="primary", use_container_width=True)
+
+# # ── Run pipeline ───────────────────────────────────────────────────────────────
+# if run:
+#     if not article or not article.strip():
+#         st.warning("Please enter some article text.")
+#     else:
+#         data = run_analysis(backend_url, article)
+#         if data:
+#             st.markdown("---")
+#             render_results(data)
