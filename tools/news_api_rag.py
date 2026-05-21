@@ -282,7 +282,8 @@ def fetch_evidence(claim_text: str, n: int = NEWS_ARTICLES_PER_CLAIM) -> List[Ev
     Keeps only articles from The Hindu and Times of India.
     No API key required.
     """
-    query = " ".join(claim_text.split()[:10])
+    # query = " ".join(claim_text.split()[:10])
+    query=claim_text
     encoded = quote(query)
     url = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
     headers = {"User-Agent": "Mozilla/5.0 (compatible; SIFACT/1.0)"}
