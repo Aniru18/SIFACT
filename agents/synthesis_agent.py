@@ -308,6 +308,8 @@ Weighting rules:
     is suported with confidence score 1.0 then the final verdict is REAL and is_fake is false and confidence score is the confidence score of the central claim.
     if the central claim is baseless with confidence score 1.0 then the final verdict is FAKE and is_fake is true and confidence score is the confidence score of the central claim.
     if the central claim is inconclusive with confidence score 1.0 then the final verdict is UNCERTAIN and is_fake is false and confidence score is the confidence score of the central claim.
+
+    
     
 You must respond only through the required structured output fields (final_verdict, is_fake,
 confidence_score, explanation). Do not put JSON or markdown code fences in plain assistant text.

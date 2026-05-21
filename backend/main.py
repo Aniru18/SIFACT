@@ -49,6 +49,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+#..................................
 class AnalyzeRequest(BaseModel):
     article: str = Field(..., min_length=1, description="Raw news article text to analyze")
 

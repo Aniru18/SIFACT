@@ -185,8 +185,73 @@
 
 
 
-# with only Google News RSS
+# ................with only Google News RSS.............
 
+# """
+# tools/news_api_rag.py
+# News API RAG Tool – fetches evidence articles for a given claim via Google News RSS.
+# """
+
+# from __future__ import annotations
+
+# import logging
+# import xml.etree.ElementTree as ET
+# from typing import List
+# from urllib.parse import quote
+
+# import requests
+
+# from config.settings import NEWS_ARTICLES_PER_CLAIM
+# from graph.state import EvidenceArticle
+
+# logger = logging.getLogger(__name__)
+
+
+# def _truncate(text: str, max_chars: int = 500) -> str:
+#     return text[:max_chars].strip() if text else ""
+
+
+# def fetch_evidence(claim_text: str, n: int = NEWS_ARTICLES_PER_CLAIM) -> List[EvidenceArticle]:
+#     """
+#     Fetches evidence articles for a given claim via Google News RSS.
+#     No API key required.
+#     """
+#     query = " ".join(claim_text.split()[:10])
+#     encoded = quote(query)
+#     url = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
+#     headers = {"User-Agent": "Mozilla/5.0 (compatible; SIFACT/1.0)"}
+
+#     try:
+#         resp = requests.get(url, headers=headers, timeout=10)
+#         resp.raise_for_status()
+
+#         root = ET.fromstring(resp.content)
+#         channel = root.find("channel")
+#         if channel is None:
+#             logger.warning("Google RSS returned no channel element")
+#             return []
+
+#         articles: List[EvidenceArticle] = []
+#         for item in list(channel.findall("item"))[:n]:
+#             src_el = item.find("source")
+#             articles.append(
+#                 EvidenceArticle(
+#                     title=item.findtext("title") or "",
+#                     description=_truncate(item.findtext("description") or "", 400),
+#                     url=item.findtext("link") or "",
+#                     source=src_el.text if src_el is not None else "Google News",
+#                     published_at=item.findtext("pubDate") or "",
+#                 )
+#             )
+
+#         logger.info("Google RSS returned %d articles for claim", len(articles))
+#         return articles
+
+#     except Exception as exc:
+#         logger.error("Google RSS fetch failed: %s", exc)
+#         return []
+
+#..............with filter...................
 """
 tools/news_api_rag.py
 News API RAG Tool – fetches evidence articles for a given claim via Google News RSS.
@@ -214,12 +279,19 @@ def _truncate(text: str, max_chars: int = 500) -> str:
 def fetch_evidence(claim_text: str, n: int = NEWS_ARTICLES_PER_CLAIM) -> List[EvidenceArticle]:
     """
     Fetches evidence articles for a given claim via Google News RSS.
+    Keeps only articles from The Hindu and Times of India.
     No API key required.
     """
     query = " ".join(claim_text.split()[:10])
     encoded = quote(query)
     url = f"https://news.google.com/rss/search?q={encoded}&hl=en-US&gl=US&ceid=US:en"
     headers = {"User-Agent": "Mozilla/5.0 (compatible; SIFACT/1.0)"}
+
+    allowed_sources = {
+        "The Hindu",
+        "The Times of India",
+        "Times of India",
+    }
 
     try:
         resp = requests.get(url, headers=headers, timeout=10)
@@ -232,19 +304,28 @@ def fetch_evidence(claim_text: str, n: int = NEWS_ARTICLES_PER_CLAIM) -> List[Ev
             return []
 
         articles: List[EvidenceArticle] = []
-        for item in list(channel.findall("item"))[:n]:
+
+        for item in channel.findall("item"):
             src_el = item.find("source")
+            source_name = src_el.text.strip() if src_el is not None and src_el.text else ""
+
+            if source_name not in allowed_sources:
+                continue
+
             articles.append(
                 EvidenceArticle(
                     title=item.findtext("title") or "",
                     description=_truncate(item.findtext("description") or "", 400),
                     url=item.findtext("link") or "",
-                    source=src_el.text if src_el is not None else "Google News",
+                    source=source_name,
                     published_at=item.findtext("pubDate") or "",
                 )
             )
 
-        logger.info("Google RSS returned %d articles for claim", len(articles))
+            if len(articles) >= n:
+                break
+
+        logger.info("Google RSS returned %d filtered articles for claim", len(articles))
         return articles
 
     except Exception as exc:

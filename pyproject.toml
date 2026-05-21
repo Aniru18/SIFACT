@@ -25,4 +25,8 @@ dependencies = [
     "requests>=2.31.0",
     "rich>=13.0.0",
     "tenacity>=9.0.0",
+    "datasets>=4.8.4",
+    "tqdm>=4.67.3",
+    "scikit-learn>=1.8.0",
+    "duckduckgo-search>=8.1.1",
 ]
