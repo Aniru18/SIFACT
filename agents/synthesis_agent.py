@@ -61,14 +61,85 @@ class SynthesisVerdict(BaseModel):
 
 # ── Few-Shot Examples ─────────────────────────────────────────────────────────
 
+# FEW_SHOT_EXAMPLES = """
+# === EXAMPLE 1 ===
+# STANCES:
+#   [central]     stance=supported    conf=0.92  "Multiple outlets confirmed the event."
+#   [secondary_1] stance=supported    conf=0.88  "Witnesses corroborated the timeline."
+#   [secondary_2] stance=inconclusive conf=0.50  "Number disputed across sources."
+# Expected structured verdict: final_verdict REAL, is_fake false, confidence_score ~0.87,
+# explanation stresses strong central support and mostly verified secondaries.
+
+# === EXAMPLE 2 ===
+# STANCES:
+#   [central]     stance=baseless     conf=0.85  "No credible source confirms this."
+#   [secondary_1] stance=baseless     conf=0.80  "Statistics contradict the claim."
+#   [secondary_2] stance=baseless     conf=0.75  "Event did not occur as described."
+#   [secondary_3] stance=supported    conf=0.60  "Minor background detail is accurate."
+# Expected: final_verdict FAKE, is_fake true, confidence_score ~0.82,
+# explanation cites baseless central and majority of secondaries.
+
+# === EXAMPLE 3 ===
+# STANCES:
+#   [central]     stance=inconclusive conf=0.45  "Conflicting reports from different sources."
+#   [secondary_1] stance=supported    conf=0.70  "Date and location confirmed."
+#   [secondary_2] stance=baseless     conf=0.65  "Quoted figure is inaccurate."
+# Expected: final_verdict UNCERTAIN, is_fake false, confidence_score ~0.50,
+# explanation notes mixed evidence and undecided central claim.
+
+# === EXAMPLE 4 (overstatement / scope mismatch) ===
+# STANCES:
+#   [central]     stance=inconclusive conf=0.78  "Evidence confirms retirement from Test cricket only; sources do not support retirement from all formats as claimed."
+#   [secondary_1] stance=supported    conf=0.85  "Career stats and identity of player confirmed."
+# Expected: final_verdict FAKE, is_fake true, confidence_score ~0.75–0.85,
+# explanation: the article's central assertion overstates verified facts (misleading even if a
+# narrower related fact is true). Do NOT output REAL.
+
+# === EXAMPLE 5 (central explicitly baseless due to overstatement) ===
+# STANCES:
+#   [central]     stance=baseless     conf=0.82  "Sources report only a partial step; the claim of a complete nationwide rollout is false."
+# Expected: final_verdict FAKE, is_fake true, high confidence.
+# """
+
+# SYSTEM_PROMPT = f"""You are the final arbitrator in a multi-agent fact-checking pipeline.
+
+# Weighting rules:
+#   • The "central" claim carries 50% of the total weight.
+#   • Each "secondary" claim shares the remaining 50% equally.
+#   • A "baseless" central claim alone is strong evidence of fake news.
+
+#   • An "inconclusive" central whose evidence_summary shows the claim is STRONGER than what
+#     sources support (scope/quantity/universal overstated) → treat as MISLEADING: prefer
+#     final_verdict FAKE and is_fake true, not REAL (see examples 4–5).
+#   • A plain "inconclusive" central (truly unclear sources) → UNCERTAIN unless secondaries
+#     are clearly baseless.
+#   • If their is only one claim only the central claim no secondary claim then if the central claim is
+#     is suported with confidence score 1.0 then the final verdict is REAL and is_fake is false and confidence score is the confidence score of the central claim.
+#     if the central claim is baseless with confidence score 1.0 then the final verdict is FAKE and is_fake is true and confidence score is the confidence score of the central claim.
+#     if the central claim is inconclusive with confidence score 1.0 then the final verdict is UNCERTAIN and is_fake is false and confidence score is the confidence score of the central claim.
+
+    
+    
+# You must respond only through the required structured output fields (final_verdict, is_fake,
+# confidence_score, explanation). Do not put JSON or markdown code fences in plain assistant text.
+
+# Few-shot logic (apply when filling the structured fields):
+# {FEW_SHOT_EXAMPLES}
+# """
 FEW_SHOT_EXAMPLES = """
 === EXAMPLE 1 ===
 STANCES:
   [central]     stance=supported    conf=0.92  "Multiple outlets confirmed the event."
   [secondary_1] stance=supported    conf=0.88  "Witnesses corroborated the timeline."
   [secondary_2] stance=inconclusive conf=0.50  "Number disputed across sources."
-Expected structured verdict: final_verdict REAL, is_fake false, confidence_score ~0.87,
-explanation stresses strong central support and mostly verified secondaries.
+Expected structured verdict:
+final_verdict REAL,
+is_fake false,
+confidence_score ~0.87
+
+Reasoning:
+The central claim is strongly supported by credible evidence and most secondary claims are also verified.
+Minor uncertainty in one secondary claim does not outweigh the overall factual consistency.
 
 === EXAMPLE 2 ===
 STANCES:
@@ -76,56 +147,137 @@ STANCES:
   [secondary_1] stance=baseless     conf=0.80  "Statistics contradict the claim."
   [secondary_2] stance=baseless     conf=0.75  "Event did not occur as described."
   [secondary_3] stance=supported    conf=0.60  "Minor background detail is accurate."
-Expected: final_verdict FAKE, is_fake true, confidence_score ~0.82,
-explanation cites baseless central and majority of secondaries.
+Expected structured verdict:
+final_verdict FAKE,
+is_fake true,
+confidence_score ~0.82
+
+Reasoning:
+The core claim is unsupported and contradicted by credible evidence.
+Even if a small background detail is true, the overall narrative is false.
 
 === EXAMPLE 3 ===
 STANCES:
   [central]     stance=inconclusive conf=0.45  "Conflicting reports from different sources."
   [secondary_1] stance=supported    conf=0.70  "Date and location confirmed."
   [secondary_2] stance=baseless     conf=0.65  "Quoted figure is inaccurate."
-Expected: final_verdict UNCERTAIN, is_fake false, confidence_score ~0.50,
-explanation notes mixed evidence and undecided central claim.
+Expected structured verdict:
+final_verdict UNCERTAIN,
+is_fake false,
+confidence_score ~0.50
+
+Reasoning:
+Evidence is mixed and the central claim cannot be decisively verified or disproved.
 
 === EXAMPLE 4 (overstatement / scope mismatch) ===
 STANCES:
   [central]     stance=inconclusive conf=0.78  "Evidence confirms retirement from Test cricket only; sources do not support retirement from all formats as claimed."
   [secondary_1] stance=supported    conf=0.85  "Career stats and identity of player confirmed."
-Expected: final_verdict FAKE, is_fake true, confidence_score ~0.75–0.85,
-explanation: the article's central assertion overstates verified facts (misleading even if a
-narrower related fact is true). Do NOT output REAL.
+Expected structured verdict:
+final_verdict FAKE,
+is_fake true,
+confidence_score ~0.80
+
+Reasoning:
+The claim exaggerates the verified facts.
+Although a related event is true, the actual claim overstates the scope and is therefore misleading.
 
 === EXAMPLE 5 (central explicitly baseless due to overstatement) ===
 STANCES:
   [central]     stance=baseless     conf=0.82  "Sources report only a partial step; the claim of a complete nationwide rollout is false."
-Expected: final_verdict FAKE, is_fake true, high confidence.
+Expected structured verdict:
+final_verdict FAKE,
+is_fake true,
+confidence_score ~0.82
+
+Reasoning:
+The evidence directly contradicts the broader claim being made.
+
+=== EXAMPLE 6 (semantic equivalence / paraphrased evidence) ===
+STANCES:
+  [central]     stance=supported    conf=0.90  "Evidence states the party secured enough seats to form the government."
+  [secondary_1] stance=supported    conf=0.84  "Election commission data confirms the result."
+Claim wording:
+"The party won a majority in the election."
+Expected structured verdict:
+final_verdict REAL,
+is_fake false,
+confidence_score ~0.88
+
+Reasoning:
+The evidence does not use the exact word 'majority' but conveys the same factual outcome.
+Semantic meaning and contextual equivalence should be considered stronger than exact keyword overlap.
 """
 
 SYSTEM_PROMPT = f"""You are the final arbitrator in a multi-agent fact-checking pipeline.
+
+Your job is to determine whether the overall news claim is REAL, FAKE, or UNCERTAIN
+based on the stances and evidence summaries provided by upstream agents.
+
+Core evaluation principles:
+  • Analyze semantic meaning, factual implication, and contextual equivalence.
+  • Do NOT rely only on exact keyword matching.
+  • Treat paraphrases and semantically equivalent statements as meaningful matches.
+  • Focus on whether the evidence conveys the same real-world outcome as the claim.
+
+Examples of semantic equivalence:
+  • "won majority" ↔ "secured enough seats to form the government"
+  • "increase" ↔ "rise"
+  • "victory" ↔ "won"
+  • "retired from international cricket" does NOT equal "retired from all cricket"
 
 Weighting rules:
   • The "central" claim carries 50% of the total weight.
   • Each "secondary" claim shares the remaining 50% equally.
   • A "baseless" central claim alone is strong evidence of fake news.
-  • An "inconclusive" central whose evidence_summary shows the claim is STRONGER than what
-    sources support (scope/quantity/universal overstated) → treat as MISLEADING: prefer
-    final_verdict FAKE and is_fake true, not REAL (see examples 4–5).
-  • A plain "inconclusive" central (truly unclear sources) → UNCERTAIN unless secondaries
-    are clearly baseless.
-  • If their is only one claim only the central claim no secondary claim then if the central claim is
-    is suported with confidence score 1.0 then the final verdict is REAL and is_fake is false and confidence score is the confidence score of the central claim.
-    if the central claim is baseless with confidence score 1.0 then the final verdict is FAKE and is_fake is true and confidence score is the confidence score of the central claim.
-    if the central claim is inconclusive with confidence score 1.0 then the final verdict is UNCERTAIN and is_fake is false and confidence score is the confidence score of the central claim.
 
-    
-    
-You must respond only through the required structured output fields (final_verdict, is_fake,
-confidence_score, explanation). Do not put JSON or markdown code fences in plain assistant text.
+Overstatement / misleading claim handling:
+  • If the central claim is labeled "inconclusive" because the claim is STRONGER,
+    BROADER, or MORE ABSOLUTE than what evidence supports, treat it as MISLEADING.
+  • In such cases, prefer:
+      final_verdict = FAKE
+      is_fake = true
+  • Examples:
+      - partial rollout claimed as nationwide rollout
+      - retirement from one format claimed as retirement from all formats
+      - isolated event claimed as universal trend
 
-Few-shot logic (apply when filling the structured fields):
+True inconclusive handling:
+  • A genuinely unclear or conflicting central claim should result in UNCERTAIN
+    unless strong contradictory evidence exists.
+
+Single-claim handling:
+  • If only the central claim exists:
+      - supported + confidence 1.0 → REAL
+      - baseless + confidence 1.0 → FAKE
+      - inconclusive + confidence 1.0 → UNCERTAIN
+
+Confidence scoring rules:
+  • Confidence should reflect:
+      - strength of evidence
+      - credibility consistency
+      - semantic alignment
+      - contradiction severity
+      - overall certainty level
+
+Explanation rules:
+  • Explanations must briefly justify:
+      - why evidence supports or contradicts the claim
+      - whether semantic/contextual equivalence was used
+      - whether the claim overstates verified facts
+  • Keep explanations concise but logically clear.
+
+You must respond ONLY through the required structured output fields:
+  - final_verdict
+  - is_fake
+  - confidence_score
+  - explanation
+
+Do NOT output markdown, JSON code fences, or extra commentary.
+
+Few-shot logic examples:
 {FEW_SHOT_EXAMPLES}
 """
-
 # ── Fallback helpers ──────────────────────────────────────────────────────────
 
 _GROQ_API_KEYS = [k for k in [GROQ_API_KEY2, GROQ_API_KEY1, GROQ_API_KEY3] if k]

@@ -292,6 +292,9 @@ def fetch_evidence(claim_text: str, n: int = NEWS_ARTICLES_PER_CLAIM) -> List[Ev
         "The Hindu",
         "The Times of India",
         "Times of India",
+        "MSN",
+        "The Indian Express",
+        "Indian Express"
     }
 
     try:

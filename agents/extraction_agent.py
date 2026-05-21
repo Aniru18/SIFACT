@@ -52,6 +52,7 @@ Rules:
   with a vague "announced retirement" if the article explicitly asserts all formats).
 - If the article bundles a strong assertion and a weaker true detail, put the strongest
   checkable assertion in central_claim and use secondary_claims for narrower facts.
+
 """
 
 USER_TEMPLATE = """Extract the central claim and up to {max_secondary} secondary claims from the article below.
